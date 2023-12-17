@@ -2,13 +2,17 @@ from dotenv import load_dotenv
 import os
 import telebot
 from openai import OpenAI
+from easygoogletranslate import EasyGoogleTranslate
 load_dotenv()
 
+translator = EasyGoogleTranslate()
 TELEGRAM_API_KEY = os.getenv('TELEGRAM_API_KEY')
 bot = telebot.TeleBot(TELEGRAM_API_KEY)
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
 )
+
+
 
 def get_cmd(text):
     words = text.split()
@@ -46,5 +50,20 @@ def handling_command(message):
             model="gpt-3.5-turbo",
         )
         bot.reply_to(message, chat_completion.choices[0].message.content)
+    elif cmd == 'chatkh' or cmd == 'ckh':
+        if not user_message :
+            return bot.reply_to(message, translator.translate("Please Provide A Message!", 'km'))   
+        user_message = translator.translate(user_message)
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": user_message,
+                }
+            ],
+            model="gpt-3.5-turbo",
+        )
+        khmer_reply = translator.translate(chat_completion.choices[0].message.content, 'km')
+        bot.reply_to(message, khmer_reply)
 		
 bot.infinity_polling()
